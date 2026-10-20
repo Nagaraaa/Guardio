@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using GardeAudio.Core;
+using Guardio.Core;
 
-namespace GardeAudio;
+namespace Guardio;
 
 internal static class Diagnostics
 {
@@ -40,12 +40,13 @@ internal static class Diagnostics
         using var audio = new NativeAudio();
         var before = Capture(audio); WriteJson(Path.Combine(directory, "avant.json"), before);
         var checks = new List<CheckResult>();
-        var headset = before.Outputs.FirstOrDefault(e => e.Active && e.Name.Contains("Logitech PRO X", StringComparison.OrdinalIgnoreCase));
-        var dual = before.Outputs.FirstOrDefault(e => e.Active && e.IsDualSense);
-        var other = before.Outputs.FirstOrDefault(e => e.Active && !e.IsDualSense && e.Id != headset?.Id);
+        var outputs = before.Outputs.Where(e => e.Active && !e.IsController).ToList();
+        var headset = outputs.FirstOrDefault(e => e.Id == before.Defaults[AudioRole.Multimedia]) ?? outputs.FirstOrDefault();
+        var dual = before.Outputs.FirstOrDefault(e => e.Active && e.IsController);
+        var other = outputs.FirstOrDefault(e => e.Id != headset?.Id);
         if (headset is null || dual is null)
         {
-            checks.Add(new("Matériel nécessaire", false, "Brancher le casque Logitech PRO X et la DualSense USB."));
+            checks.Add(new("Matériel nécessaire", false, "Sélectionner un casque dans Windows et brancher une manette avec sortie audio."));
             WriteJson(Path.Combine(directory, "resultats.json"), checks); return 2;
         }
         using var guard = new GuardService(dispatcher, audio, Path.Combine(directory, "journal")) { FallbackId = headset.Id };

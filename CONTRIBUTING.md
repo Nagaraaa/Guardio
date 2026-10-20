@@ -1,16 +1,14 @@
 # Contributing
 
-Small, reproducible fixes and hardware compatibility reports are welcome. For larger features, open an issue first so the intended behavior can be discussed.
+Fixes and controller compatibility reports are welcome. For larger features, open an issue first.
 
-Use Windows with the .NET 8 SDK. Before submitting a code change, run:
+Before submitting a change, on Windows with the .NET 8 SDK:
 
 ```powershell
-dotnet build src/GardeAudio/GardeAudio.csproj -c Release
-dotnet run --project tests/GardeAudio.Tests/GardeAudio.Tests.csproj -c Release
+dotnet build src/Guardio/Guardio.csproj -c Release
+dotnet run --project tests/Guardio.Tests/Guardio.Tests.csproj -c Release
 ```
 
-Changes to the policy should preserve manual choices, the short arrival window and the rule that unavailable outputs are never selected. Add a focused regression scenario for a behavior change. Do not turn the guard into a permanent default-output lock.
+Policy changes should keep manual choices free, keep the short arrival window, and never select an unavailable output. Add a test scenario for any behavior change.
 
-Keep simulated checks and real hardware results distinct. Do not describe a successful build or a readable controller as proof of haptics or adaptive triggers. The diagnostic `--live-test` command changes actual audio defaults and currently depends on a specific headset fixture; it is not required for every contributor.
-
-Do not commit local `donnees/` folders, raw inventories or device identifiers. Include the controller model, connection type and Windows version in compatibility reports.
+When adding controller detection, add the name to `ControllerDetector` and a test. Don't commit `donnees/` folders, inventories or device IDs.

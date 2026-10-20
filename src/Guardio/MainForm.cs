@@ -14,21 +14,22 @@ public sealed class MainForm : Form
     private readonly ActivityList journal = new();
     private readonly NotifyIcon tray = new() { Text = "Guardio", Visible = true };
     private readonly ToolStripMenuItem trayEnable = new("Protection active") { Checked = true, CheckOnClick = true };
+    private readonly ToggleSwitch autoStart = new() { Anchor = AnchorStyles.Right, AccessibleName = "Lancer avec Windows" };
     private readonly ToolTip tips = new();
     private readonly string dataDir;
     private GuardService? guard;
-    private bool refreshing;
+    private bool refreshing, startHidden, quitting, trayHintShown;
     private string shownSignature = "";
 
-    public MainForm(string dataDir)
+    public MainForm(string dataDir, bool startHidden = false)
     {
-        this.dataDir = dataDir;
+        this.dataDir = dataDir; this.startHidden = startHidden;
         SuspendLayout();
         AutoScaleDimensions = new(96F, 96F); AutoScaleMode = AutoScaleMode.Dpi;
         Text = "Guardio"; Font = new("Segoe UI", 9.75f);
         Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? SystemIcons.Application;
         tray.Icon = Icon;
-        ClientSize = new(480, 600); MinimumSize = new(440, 540);
+        ClientSize = new(480, 650); MinimumSize = new(440, 600);
         StartPosition = FormStartPosition.CenterScreen;
 
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new(20, 18, 20, 14), ColumnCount = 1 };
@@ -36,6 +37,7 @@ public sealed class MainForm : Form
         root.Controls.Add(Header());
         root.Controls.Add(AudioCard());
         root.Controls.Add(ControllersCard());
+        root.Controls.Add(StartupCard());
         var activity = ActivityCard();
         root.Controls.Add(activity);
         root.Controls.Add(Footer());
@@ -53,13 +55,37 @@ public sealed class MainForm : Form
         menu.Items.Add(trayEnable);
         trayEnable.CheckedChanged += (_, _) => { if (!refreshing) enabled.Checked = trayEnable.Checked; };
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Quitter", null, (_, _) => Close()); tray.ContextMenuStrip = menu;
+        menu.Items.Add("Quitter", null, (_, _) => Quit()); tray.ContextMenuStrip = menu;
         Theme.Changed += OnThemeChanged;
-        HandleCreated += (_, _) => Theme.Apply(this);
-        Shown += (_, _) => StartGuard();
+        // The guard starts with the window handle, so it also runs when started hidden.
+        HandleCreated += (_, _) => { Theme.Apply(this); if (guard is null) StartGuard(); };
+        FormClosing += OnClosing;
         FormClosed += (_, _) => { Theme.Changed -= OnThemeChanged; tray.Visible = false; tray.Dispose(); guard?.Dispose(); };
         Resize += (_, _) => { if (WindowState == FormWindowState.Minimized) Hide(); };
     }
+
+    protected override void SetVisibleCore(bool value)
+    {
+        // Started with Windows: stay in the notification area until opened.
+        if (startHidden && value)
+        {
+            startHidden = false; value = false;
+            if (!IsHandleCreated) CreateHandle();
+        }
+        base.SetVisibleCore(value);
+    }
+
+    private void OnClosing(object? sender, FormClosingEventArgs e)
+    {
+        // The close button keeps protection running; "Quitter" really exits.
+        if (quitting || e.CloseReason != CloseReason.UserClosing) return;
+        e.Cancel = true; Hide();
+        if (trayHintShown) return;
+        trayHintShown = true;
+        tray.ShowBalloonTip(4000, "Guardio reste actif", "Clic droit sur l’icône puis Quitter pour l’arrêter.", ToolTipIcon.None);
+    }
+
+    private void Quit() { quitting = true; Close(); }
 
     private Control Header()
     {
@@ -97,6 +123,20 @@ public sealed class MainForm : Form
         return MakeCard(Theme.Gamepad, "Manettes", manage, controllers);
     }
 
+    private Control StartupCard()
+    {
+        try { AutoStart.Refresh(); autoStart.Checked = AutoStart.Enabled; }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException) { autoStart.Enabled = false; }
+        autoStart.CheckedChanged += (_, _) =>
+        {
+            if (refreshing) return;
+            Run(() => AutoStart.Enabled = autoStart.Checked);
+            refreshing = true; autoStart.Checked = AutoStart.Enabled; refreshing = false;
+        };
+        tips.SetToolTip(autoStart, "Démarrer Guardio dans la zone de notification à l’ouverture de session.");
+        return MakeCard(Theme.Power, "Lancer avec Windows", autoStart, null);
+    }
+
     private Control ActivityCard()
     {
         var card = MakeCard(Theme.History, "Activité", null, journal);
@@ -106,29 +146,28 @@ public sealed class MainForm : Form
 
     private Control Footer()
     {
-        var footer = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 3, Margin = new(0) };
-        footer.ColumnStyles.Add(new(SizeType.Percent, 100)); footer.ColumnStyles.Add(new(SizeType.AutoSize)); footer.ColumnStyles.Add(new(SizeType.AutoSize));
-        var hide = new FlatButton { Text = "Réduire", Margin = new(0, 0, 8, 0) };
+        var footer = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 2, Margin = new(0) };
+        footer.ColumnStyles.Add(new(SizeType.Percent, 100)); footer.ColumnStyles.Add(new(SizeType.AutoSize));
         var quit = new FlatButton { Text = "Quitter", Margin = new(0) };
-        tips.SetToolTip(hide, "Continuer dans la zone de notification.");
-        hide.Click += (_, _) => Hide(); quit.Click += (_, _) => Close();
+        tips.SetToolTip(quit, "Arrêter Guardio. La croix le garde dans la zone de notification.");
+        quit.Click += (_, _) => Quit();
         footer.Controls.Add(new MutedLabel { Text = "v" + Program.Version, Anchor = AnchorStyles.Left }, 0, 0);
-        footer.Controls.Add(hide, 1, 0); footer.Controls.Add(quit, 2, 0);
+        footer.Controls.Add(quit, 1, 0);
         return footer;
     }
 
-    private static Card MakeCard(string glyph, string title, Control? action, Control body)
+    private static Card MakeCard(string glyph, string title, Control? action, Control? body)
     {
         var card = new Card { Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, BackColor = Theme.Current.Surface };
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 1, Margin = new(0) };
         layout.ColumnStyles.Add(new(SizeType.Percent, 100));
-        var head = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 3, Margin = new(0, 0, 0, 6) };
+        var head = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 3, Margin = new(0, 0, 0, body is null ? 0 : 6) };
         head.ColumnStyles.Add(new(SizeType.AutoSize)); head.ColumnStyles.Add(new(SizeType.Percent, 100)); head.ColumnStyles.Add(new(SizeType.AutoSize));
         head.Controls.Add(new Glyph(glyph) { Anchor = AnchorStyles.Left }, 0, 0);
         head.Controls.Add(new Label { Text = title, AutoSize = true, Font = new("Segoe UI Semibold", 10.5f), Anchor = AnchorStyles.Left, Margin = new(0) }, 1, 0);
         if (action is not null) head.Controls.Add(action, 2, 0);
         layout.Controls.Add(head, 0, 0);
-        layout.Controls.Add(body, 0, 1);
+        if (body is not null) layout.Controls.Add(body, 0, 1);
         layout.RowStyles.Add(new(SizeType.AutoSize)); layout.RowStyles.Add(new(SizeType.Percent, 100));
         card.Controls.Add(layout);
         return card;

@@ -9,7 +9,7 @@ Quand on branche une manette en USB (DualSense, DualShock 4, Xbox…), Windows b
 1. Télécharger **[Guardio v0.2.0](https://github.com/Nagaraaa/Guardio/releases/download/v0.2.0/Guardio-v0.2.0-windows-x64.zip)**. Ce ZIP contient .NET : rien d'autre à installer.
 2. L'extraire où on veut et lancer `Guardio.exe`, sans droits administrateur.
 
-Pour désinstaller, quitter Guardio et supprimer son dossier.
+Pour désinstaller, désactiver **Lancer avec Windows**, quitter Guardio et supprimer son dossier.
 
 Tu viens de GardeAudio ? Quitte-le, puis copie son dossier `donnees/` à côté de `Guardio.exe` pour garder tes réglages.
 
@@ -19,7 +19,8 @@ Tu viens de GardeAudio ? Quitte-le, puis copie son dossier `donnees/` à côté 
 - **Sortie** : la sortie audio actuelle. Un choix fait ici est toujours respecté, même la manette.
 - **Secours** : sortie utilisée si la précédente a disparu.
 - **Manettes → Gérer** : choisir quelles sorties sont des manettes si la tienne n'est pas reconnue.
-- **Réduire** : Guardio continue dans la zone de notification.
+- **Lancer avec Windows** : Guardio démarre caché dans la zone de notification à l'ouverture de session.
+- Fermer la fenêtre laisse Guardio actif dans la zone de notification. **Quitter** (ou clic droit sur l'icône) l'arrête.
 
 ## Bon à savoir
 

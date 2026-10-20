@@ -6,7 +6,8 @@ game controller over USB (DualSense, DualShock 4, Xbox...).
 The standalone package includes .NET. The framework-dependent package
 requires the .NET 8 Desktop Runtime (x64).
 
-To uninstall, quit Guardio and delete this folder.
+To uninstall, turn off "Lancer avec Windows", quit Guardio
+and delete this folder.
 
 Guide en francais : https://github.com/Nagaraaa/Guardio/blob/main/docs/README.fr.md
 Source and bug reports: https://github.com/Nagaraaa/Guardio

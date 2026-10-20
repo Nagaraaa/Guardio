@@ -24,7 +24,7 @@ Also available: a [smaller ZIP](https://github.com/Nagaraaa/Guardio/releases/dow
 
 New in 0.2.0: redesigned interface with light and dark themes, support for DualShock 4 and Xbox controllers, and manual controller selection.
 
-Extract it anywhere and run `Guardio.exe`. No installer and no admin rights. To uninstall, delete the folder.
+Extract it anywhere and run `Guardio.exe`. No installer and no admin rights. To uninstall, turn off **Lancer avec Windows**, quit, and delete the folder.
 
 Coming from GardeAudio? Quit it, then copy its `donnees/` folder next to `Guardio.exe` to keep your settings.
 
@@ -34,7 +34,8 @@ Coming from GardeAudio? Quit it, then copy its `donnees/` folder next to `Guardi
 - **Sortie**: the current Windows output. Choosing one here always wins, even the controller.
 - **Secours**: used if the previous output is gone.
 - **Manettes → Gérer**: choose which outputs count as controllers, if yours isn't detected automatically.
-- **Réduire** keeps Guardio running in the notification area.
+- **Lancer avec Windows** starts Guardio hidden in the notification area when you log in.
+- Closing the window keeps Guardio running in the notification area. **Quitter** (or right-click the tray icon) stops it.
 
 ## How it works
 
@@ -42,7 +43,7 @@ When a controller's audio output appears, Guardio watches the Windows default ou
 
 Controllers are recognized by name (DualSense, DualSense Edge, DualShock 4, Xbox controllers, "Gamepad"). Any other output can be marked manually.
 
-Guardio does not disable devices, install drivers, change microphones or volume, or use the network. Settings and a log are stored in `donnees/` next to the executable.
+Guardio does not disable devices, install drivers, change microphones or volume, or use the network. Its only system change is the optional startup entry in `HKCU\…\Run`. Settings and a log are stored in `donnees/` next to the executable.
 
 **Known limits:** a manual switch to the controller in Windows settings within those two seconds is also undone; use **Sortie** in Guardio instead. A brief sound cut can happen. Apps that target the controller directly are not rerouted. The output switch uses Windows' undocumented `PolicyConfig` interface.
 

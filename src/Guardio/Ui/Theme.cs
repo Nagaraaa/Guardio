@@ -47,7 +47,7 @@ internal static class Theme
         .Any(f => f.Name == "Segoe Fluent Icons") ? "Segoe Fluent Icons" : "Segoe MDL2 Assets";
     public static Font IconFont(float size) => new(IconFamily, size);
     public const string Headphones = "", Gamepad = "", Shield = "", Speaker = "",
-        History = "", Settings = "";
+        History = "", Settings = "", Power = "";
 
     public static GraphicsPath Rounded(RectangleF r, float radius)
     {

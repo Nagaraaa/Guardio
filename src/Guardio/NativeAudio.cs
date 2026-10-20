@@ -7,9 +7,9 @@ public record Endpoint(string Id, string Name, string Description, string Interf
     uint State, bool Input)
 {
     public bool Active => State == 1;
-    public bool IsDualSense => !Input && new[] { Name, Description, InterfaceName }
-        .Any(s => s.Contains("DualSense", StringComparison.OrdinalIgnoreCase));
-    public OutputDevice ToOutput() => new(Id, Name, Active, IsDualSense);
+    // Detected from the device names; GuardService applies the user's manual overrides.
+    public bool IsController { get; init; } = !Input && ControllerDetector.Matches(Name, Description, InterfaceName);
+    public OutputDevice ToOutput() => new(Id, Name, Active, IsController);
     public override string ToString() => Name;
 }
 

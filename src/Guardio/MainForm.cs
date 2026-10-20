@@ -1,76 +1,148 @@
 using System.Text.Json;
+using Guardio.Ui;
 
 namespace Guardio;
 
 public sealed class MainForm : Form
 {
-    private readonly Label status = new() { AutoSize = true, Font = new("Segoe UI", 12, FontStyle.Bold) };
-    private readonly Label controller = new() { AutoSize = true };
-    private readonly Label output = new() { AutoSize = true, MaximumSize = new(570, 0) };
-    private readonly ComboBox fallback = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 550 };
-    private readonly ComboBox manualOutput = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 415 };
-    private readonly ListBox journal = new() { Dock = DockStyle.Fill, HorizontalScrollbar = true, IntegralHeight = false };
-    private readonly CheckBox enabled = new() { Text = "Protéger les branchements de la DualSense", AutoSize = true, Checked = true };
-    private readonly NotifyIcon tray = new() { Icon = SystemIcons.Shield, Text = "Guardio — DualSense", Visible = true };
+    private readonly Label status = new() { AutoSize = true, Margin = new(0, 2, 0, 0) };
+    private readonly ToggleSwitch enabled = new() { Checked = true, Anchor = AnchorStyles.Right, AccessibleName = "Protection" };
+    private readonly FlatCombo output = new() { AccessibleName = "Sortie audio" };
+    private readonly FlatCombo fallback = new() { AccessibleName = "Sortie de secours" };
+    private readonly FlowLayoutPanel controllers = new()
+    { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true, Dock = DockStyle.Top, Margin = new(0) };
+    private readonly ActivityList journal = new();
+    private readonly NotifyIcon tray = new() { Text = "Guardio", Visible = true };
+    private readonly ToolStripMenuItem trayEnable = new("Protection active") { Checked = true, CheckOnClick = true };
+    private readonly ToolTip tips = new();
     private readonly string dataDir;
     private GuardService? guard;
     private bool refreshing;
     private string shownSignature = "";
-    private readonly ToolStripMenuItem trayEnable = new("Protection active") { Checked = true, CheckOnClick = true };
 
     public MainForm(string dataDir)
     {
         this.dataDir = dataDir;
-        Text = "Guardio · DualSense · 0.1.1";
-        Font = new("Segoe UI", 10); BackColor = Color.FromArgb(248, 249, 251);
-        ClientSize = new(620, 545); MinimumSize = new(600, 560);
+        SuspendLayout();
+        AutoScaleDimensions = new(96F, 96F); AutoScaleMode = AutoScaleMode.Dpi;
+        Text = "Guardio"; Font = new("Segoe UI", 9.75f);
+        Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? SystemIcons.Application;
+        tray.Icon = Icon;
+        ClientSize = new(480, 600); MinimumSize = new(440, 540);
         StartPosition = FormStartPosition.CenterScreen;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new(22), ColumnCount = 1, RowCount = 12 };
-        layout.ColumnStyles.Add(new(SizeType.Percent, 100));
-        foreach (int height in new[] { 42, 31, 40, 32, 27, 38, 30, 42, 48, 25 })
-            layout.RowStyles.Add(new(SizeType.Absolute, height));
-        layout.RowStyles.Add(new(SizeType.Percent, 100)); layout.RowStyles.Add(new(SizeType.Absolute, 34));
-        layout.Controls.Add(status, 0, 0); layout.Controls.Add(controller, 0, 1); layout.Controls.Add(output, 0, 2);
-        layout.Controls.Add(enabled, 0, 3);
-        layout.Controls.Add(new Label { Text = "Sortie de secours si la précédente n’est plus disponible", AutoSize = true }, 0, 4);
-        layout.Controls.Add(fallback, 0, 5);
-        layout.Controls.Add(new Label { Text = "Changer volontairement de sortie", AutoSize = true }, 0, 6);
-        var manualRow = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false };
-        var apply = new Button { Text = "Utiliser", AutoSize = true, Height = 31 };
-        manualRow.Controls.Add(manualOutput); manualRow.Controls.Add(apply); layout.Controls.Add(manualRow, 0, 7);
-        layout.Controls.Add(new Label { Text = "Casque et enceintes restent libres. Pour choisir la manette pendant\nles 2 s du branchement, sélectionne-la ici puis clique sur Utiliser.", AutoSize = true, ForeColor = Color.DimGray }, 0, 8);
-        layout.Controls.Add(new Label { Text = "Activité", AutoSize = true }, 0, 9);
-        layout.Controls.Add(journal, 0, 10);
-        var footer = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
-        var quit = new Button { Text = "Quitter", AutoSize = true };
-        var hide = new Button { Text = "Réduire près de l’horloge", AutoSize = true };
-        footer.Controls.Add(quit); footer.Controls.Add(hide); layout.Controls.Add(footer, 0, 11);
-        Controls.Add(layout);
+
+        var root = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new(20, 18, 20, 14), ColumnCount = 1 };
+        root.ColumnStyles.Add(new(SizeType.Percent, 100));
+        root.Controls.Add(Header());
+        root.Controls.Add(AudioCard());
+        root.Controls.Add(ControllersCard());
+        var activity = ActivityCard();
+        root.Controls.Add(activity);
+        root.Controls.Add(Footer());
+        for (int i = 0; i < root.Controls.Count; i++)
+            root.RowStyles.Add(root.Controls[i] == activity ? new(SizeType.Percent, 100) : new(SizeType.AutoSize));
+        Controls.Add(root);
+        ResumeLayout(false); PerformLayout();
+
         enabled.CheckedChanged += (_, _) => { if (!refreshing && guard is not null) { guard.Enable(enabled.Checked); SaveSettings(); } };
+        output.SelectionChangeCommitted += (_, _) => { if (output.SelectedItem is Endpoint e) Run(() => guard!.SelectManually(e.Id)); };
         fallback.SelectedIndexChanged += (_, _) => { if (!refreshing && guard is not null) { guard.FallbackId = (fallback.SelectedItem as Endpoint)?.Id; SaveSettings(); } };
-        apply.Click += (_, _) => { if (manualOutput.SelectedItem is Endpoint e) Run(() => guard!.SelectManually(e.Id)); };
-        quit.Click += (_, _) => Close(); hide.Click += (_, _) => Hide();
         tray.DoubleClick += (_, _) => OpenWindow();
         var menu = new ContextMenuStrip();
         menu.Items.Add("Ouvrir Guardio", null, (_, _) => OpenWindow());
         menu.Items.Add(trayEnable);
         trayEnable.CheckedChanged += (_, _) => { if (!refreshing) enabled.Checked = trayEnable.Checked; };
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Quitter", null, (_, _) => Close()); tray.ContextMenuStrip = menu;
+        Theme.Changed += OnThemeChanged;
+        HandleCreated += (_, _) => Theme.Apply(this);
         Shown += (_, _) => StartGuard();
-        FormClosed += (_, _) => { tray.Visible = false; tray.Dispose(); guard?.Dispose(); };
+        FormClosed += (_, _) => { Theme.Changed -= OnThemeChanged; tray.Visible = false; tray.Dispose(); guard?.Dispose(); };
         Resize += (_, _) => { if (WindowState == FormWindowState.Minimized) Hide(); };
+    }
+
+    private Control Header()
+    {
+        var header = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 3, Margin = new(0, 0, 0, 16) };
+        header.ColumnStyles.Add(new(SizeType.AutoSize)); header.ColumnStyles.Add(new(SizeType.Percent, 100)); header.ColumnStyles.Add(new(SizeType.AutoSize));
+        var titles = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, WrapContents = false, Margin = new(0), Anchor = AnchorStyles.Left };
+        titles.Controls.Add(new Label { Text = "Guardio", AutoSize = true, Font = new("Segoe UI Semibold", 15f), Margin = new(0) });
+        titles.Controls.Add(status);
+        header.Controls.Add(new IconBadge(Theme.Headphones) { Anchor = AnchorStyles.Left }, 0, 0);
+        header.Controls.Add(titles, 1, 0);
+        header.Controls.Add(enabled, 2, 0);
+        tips.SetToolTip(enabled, "Rétablir la sortie audio quand Windows bascule sur une manette qu’on vient de brancher.");
+        return header;
+    }
+
+    private Control AudioCard()
+    {
+        var grid = new TableLayoutPanel { ColumnCount = 2, AutoSize = true, Dock = DockStyle.Fill, Margin = new(0, 6, 0, 0) };
+        grid.ColumnStyles.Add(new(SizeType.AutoSize)); grid.ColumnStyles.Add(new(SizeType.Percent, 100));
+        grid.Controls.Add(new Label { Text = "Sortie", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new(0, 0, 16, 0) }, 0, 0);
+        grid.Controls.Add(output, 1, 0);
+        var fallbackLabel = new Label { Text = "Secours", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new(0, 0, 16, 0) };
+        grid.Controls.Add(fallbackLabel, 0, 1);
+        grid.Controls.Add(fallback, 1, 1);
+        tips.SetToolTip(fallbackLabel, "Utilisée si la sortie précédente n’est plus disponible.");
+        tips.SetToolTip(fallback, "Utilisée si la sortie précédente n’est plus disponible.");
+        return MakeCard(Theme.Speaker, "Audio", null, grid);
+    }
+
+    private Control ControllersCard()
+    {
+        var manage = new FlatButton { Text = "Gérer", MinimumSize = new(0, 28), Padding = new(10, 2, 10, 2), Anchor = AnchorStyles.Right };
+        manage.Click += (_, _) => ManageControllers();
+        tips.SetToolTip(manage, "Choisir quelles sorties audio sont des manettes.");
+        return MakeCard(Theme.Gamepad, "Manettes", manage, controllers);
+    }
+
+    private Control ActivityCard()
+    {
+        var card = MakeCard(Theme.History, "Activité", null, journal);
+        card.AutoSize = false; card.Dock = DockStyle.Fill; card.MinimumSize = new(0, 120);
+        return card;
+    }
+
+    private Control Footer()
+    {
+        var footer = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 3, Margin = new(0) };
+        footer.ColumnStyles.Add(new(SizeType.Percent, 100)); footer.ColumnStyles.Add(new(SizeType.AutoSize)); footer.ColumnStyles.Add(new(SizeType.AutoSize));
+        var hide = new FlatButton { Text = "Réduire", Margin = new(0, 0, 8, 0) };
+        var quit = new FlatButton { Text = "Quitter", Margin = new(0) };
+        tips.SetToolTip(hide, "Continuer dans la zone de notification.");
+        hide.Click += (_, _) => Hide(); quit.Click += (_, _) => Close();
+        footer.Controls.Add(new MutedLabel { Text = "v" + Program.Version, Anchor = AnchorStyles.Left }, 0, 0);
+        footer.Controls.Add(hide, 1, 0); footer.Controls.Add(quit, 2, 0);
+        return footer;
+    }
+
+    private static Card MakeCard(string glyph, string title, Control? action, Control body)
+    {
+        var card = new Card { Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, BackColor = Theme.Current.Surface };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 1, Margin = new(0) };
+        layout.ColumnStyles.Add(new(SizeType.Percent, 100));
+        var head = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 3, Margin = new(0, 0, 0, 6) };
+        head.ColumnStyles.Add(new(SizeType.AutoSize)); head.ColumnStyles.Add(new(SizeType.Percent, 100)); head.ColumnStyles.Add(new(SizeType.AutoSize));
+        head.Controls.Add(new Glyph(glyph) { Anchor = AnchorStyles.Left }, 0, 0);
+        head.Controls.Add(new Label { Text = title, AutoSize = true, Font = new("Segoe UI Semibold", 10.5f), Anchor = AnchorStyles.Left, Margin = new(0) }, 1, 0);
+        if (action is not null) head.Controls.Add(action, 2, 0);
+        layout.Controls.Add(head, 0, 0);
+        layout.Controls.Add(body, 0, 1);
+        layout.RowStyles.Add(new(SizeType.AutoSize)); layout.RowStyles.Add(new(SizeType.Percent, 100));
+        card.Controls.Add(layout);
+        return card;
     }
 
     private void StartGuard()
     {
         Run(() =>
         {
-            guard = new GuardService(this, new NativeAudio(), dataDir);
-            guard.Changed += RefreshView;
             var saved = LoadSettings();
-            guard.FallbackId = guard.Outputs.FirstOrDefault(e => e.Active && !e.IsDualSense && e.Id == saved.FallbackId)?.Id
-                ?? guard.Outputs.FirstOrDefault(e => e.Active && !e.IsDualSense && e.Name.Contains("Logitech PRO X", StringComparison.OrdinalIgnoreCase))?.Id
-                ?? guard.Outputs.FirstOrDefault(e => e.Active && !e.IsDualSense)?.Id;
+            guard = new GuardService(this, new NativeAudio(), dataDir, saved.Controllers);
+            guard.Changed += RefreshView;
+            guard.FallbackId = guard.Outputs.FirstOrDefault(e => e.Active && !e.IsController && e.Id == saved.FallbackId)?.Id
+                ?? guard.Outputs.FirstOrDefault(e => e.Active && !e.IsController)?.Id;
             if (!saved.Enabled) guard.Enable(false);
             RefreshView(); guard.WriteStatus();
         });
@@ -82,26 +154,25 @@ public sealed class MainForm : Form
         refreshing = true;
         try
         {
+            var t = Theme.Current;
             enabled.Checked = guard.Enabled; trayEnable.Checked = guard.Enabled;
-            var duals = guard.Outputs.Where(e => e.Active && e.IsDualSense).ToArray();
-            status.Text = guard.Enabled ? "Protection active au branchement" : "Protection en pause";
-            status.ForeColor = guard.Enabled ? Color.FromArgb(24, 105, 73) : Color.DarkOrange;
-            controller.Text = duals.Length > 0 ? "DualSense détectée · sortie audio disponible" : "DualSense débranchée · en attente";
-            output.Text = "Son actuel : " + guard.CurrentName;
+            status.Text = guard.Enabled ? "●  Protection active" : "●  En pause";
+            status.ForeColor = guard.Enabled ? t.Success : t.Warning;
+            tray.Text = guard.Enabled ? "Guardio · protection active" : "Guardio · en pause";
             var active = guard.Outputs.Where(e => e.Active).ToList();
-            var signature = string.Join("|", active.Select(e => e.Id + e.Name));
+            var signature = string.Join("|", active.Select(e => e.Id + e.Name + e.IsController));
             if (signature != shownSignature)
             {
-                var manualId = (manualOutput.SelectedItem as Endpoint)?.Id;
-                fallback.Items.Clear(); manualOutput.Items.Clear();
+                output.Items.Clear(); fallback.Items.Clear();
                 foreach (var e in active)
                 {
-                    if (!e.IsDualSense) fallback.Items.Add(e);
-                    manualOutput.Items.Add(e);
+                    output.Items.Add(e);
+                    if (!e.IsController) fallback.Items.Add(e);
                 }
-                manualOutput.SelectedItem = active.FirstOrDefault(e => e.Id == manualId) ?? active.FirstOrDefault();
+                ShowControllers(active.Where(e => e.IsController).ToList());
                 shownSignature = signature;
             }
+            output.SelectedItem = output.Items.Cast<Endpoint>().FirstOrDefault(e => e.Id == guard.CurrentId);
             fallback.SelectedItem = fallback.Items.Cast<Endpoint>().FirstOrDefault(e => e.Id == guard.FallbackId);
             if (journal.Items.Count != guard.Log.Count || (journal.Items.Count > 0 && (string?)journal.Items[^1] != guard.Log.LastOrDefault()))
             {
@@ -113,7 +184,32 @@ public sealed class MainForm : Form
         finally { refreshing = false; }
     }
 
-    private record Settings(string? FallbackId = null, bool Enabled = true);
+    private void ShowControllers(List<Endpoint> connected)
+    {
+        controllers.SuspendLayout();
+        foreach (Control c in controllers.Controls.Cast<Control>().ToArray()) c.Dispose();
+        if (connected.Count == 0)
+            controllers.Controls.Add(new MutedLabel { Text = "Aucune manette branchée", Margin = new(0, 2, 0, 2) });
+        foreach (var e in connected)
+            controllers.Controls.Add(new Label { Text = e.Name, AutoSize = true, Margin = new(0, 2, 0, 2) });
+        controllers.ResumeLayout();
+    }
+
+    private void ManageControllers()
+    {
+        if (guard is null) return;
+        using var dialog = new ControllersForm(guard);
+        dialog.ShowDialog(this);
+        SaveSettings();
+    }
+
+    private void OnThemeChanged()
+    {
+        if (IsDisposed || !IsHandleCreated) return;
+        BeginInvoke(() => { Theme.Apply(this); RefreshView(); });
+    }
+
+    private record Settings(string? FallbackId = null, bool Enabled = true, Dictionary<string, bool>? Controllers = null);
     private Settings LoadSettings()
     {
         try { return JsonSerializer.Deserialize<Settings>(File.ReadAllText(Path.Combine(dataDir, "reglages.json"))) ?? new(); }
@@ -122,8 +218,8 @@ public sealed class MainForm : Form
     private void SaveSettings()
     {
         if (guard is null) return;
-        Run(() => File.WriteAllText(Path.Combine(dataDir, "reglages.json"),
-            JsonSerializer.Serialize(new Settings(guard.FallbackId, guard.Enabled), GuardService.JsonOptions)));
+        Run(() => File.WriteAllText(Path.Combine(dataDir, "reglages.json"), JsonSerializer.Serialize(
+            new Settings(guard.FallbackId, guard.Enabled, guard.ControllerOverrides.ToDictionary()), GuardService.JsonOptions)));
     }
     private void Run(Action action)
     {

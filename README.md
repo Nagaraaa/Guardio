@@ -1,72 +1,46 @@
 # Guardio
 
-**Keep your headset selected when you plug in a PS5 DualSense controller.**
+**Keeps your headset selected when you plug in a game controller.**
 
 [![Build](https://github.com/Nagaraaa/Guardio/actions/workflows/build.yml/badge.svg)](https://github.com/Nagaraaa/Guardio/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform: Windows x64](https://img.shields.io/badge/platform-Windows%20x64-0078D4.svg)](#download)
 
-Windows can switch its default sound output to a controller when it is connected over USB. Guardio watches for a DualSense connection and restores the output you were using if that switch happens. It leaves the controller's audio device enabled.
+When you connect a DualSense, DualShock 4 or Xbox controller over USB, Windows often switches its sound output to the controller. Guardio notices the switch and puts your previous output back. The controller's audio device stays enabled.
 
-This is a small, portable Windows utility. **v0.1.1 is an early preview for PS5 DualSense over USB.** It renames GardeAudio to Guardio and keeps the same audio policy validated on Windows 11 in v0.1.0. The application interface is currently in French. [Guide en français](docs/README.fr.md).
+Portable Windows x64 app. The interface is in French. [Guide en français](docs/README.fr.md)
 
 ## Download
 
-| Package | Choose this if… |
-| --- | --- |
-| **[Windows x64 — standalone ZIP](https://github.com/Nagaraaa/Guardio/releases/download/v0.1.1/Guardio-v0.1.1-windows-x64.zip)** | You want to extract and run it. Includes the .NET runtime; no separate .NET installation needed. |
-| [Windows x64 — small ZIP](https://github.com/Nagaraaa/Guardio/releases/download/v0.1.1/Guardio-v0.1.1-windows-x64-framework-dependent.zip) | You already have the [.NET 8 Desktop Runtime, x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0). |
+Get the latest ZIP from the [releases page](https://github.com/Nagaraaa/Guardio/releases/latest):
 
-[Release notes and SHA-256 checksums](https://github.com/Nagaraaa/Guardio/releases/tag/v0.1.1). These builds are unsigned.
+- **standalone**: includes .NET, nothing else to install;
+- **framework-dependent**: smaller, but needs the [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0).
 
-## Get started
+Extract it anywhere and run `Guardio.exe`. No installer and no admin rights. To uninstall, delete the folder.
 
-1. Extract the whole ZIP into a writable folder, then run `Guardio.exe`. Administrator rights are not required.
-2. Select your headset in Windows before connecting the controller. Leave **Protéger les branchements de la DualSense** checked.
-3. Pick a fallback output under **Sortie de secours**. It is only used if the previous output is unavailable.
-4. Connect your DualSense over USB. Guardio watches for an unwanted switch during the next two seconds.
-5. Use **Réduire près de l’horloge** to keep it running in the tray. **Quitter** and the window's close button both exit the program.
+Coming from GardeAudio? Quit it, then copy its `donnees/` folder next to `Guardio.exe` to keep your settings.
 
-To switch outputs deliberately, select one under **Changer volontairement de sortie** and click **Utiliser**. This always takes precedence over a pending correction. You can also pause protection using the checkbox or tray menu.
+## Usage
 
-There is no installer or automatic Windows startup entry. To uninstall, quit the application and delete its folder.
+- The switch at the top turns protection on or off.
+- **Sortie**: the current Windows output. Choosing one here always wins, even the controller.
+- **Secours**: used if the previous output is gone.
+- **Manettes → Gérer**: choose which outputs count as controllers, if yours isn't detected automatically.
+- **Réduire** keeps Guardio running in the notification area.
 
-## What it does
+## How it works
 
-- Remembers the previous default separately for Windows' console, multimedia and communications output roles.
-- Arms protection only when a DualSense audio output becomes available, with at most one correction per role during a two-second window.
-- Allows changes to a different headset or speakers during that window. Outside it, Windows output selection remains free, including the controller.
-- Uses the previous available output, then a remembered valid output or your configured fallback. With no valid destination, it makes no forced selection.
+When a controller's audio output appears, Guardio watches the Windows default output for two seconds. If it moves to the controller, Guardio restores the previous output, at most once per audio role (console, multimedia, communications). Outside that window, your choices are never overridden.
 
-It does not disable devices, install drivers, send controller input reports, change microphone defaults or adjust volume. Preferences and a local diagnostic log stay in `donnees/` beside the executable; the application has no telemetry or network calls.
+Controllers are recognized by name (DualSense, DualSense Edge, DualShock 4, Xbox controllers, "Gamepad"). Any other output can be marked manually.
 
-## Limits to know
+Guardio does not disable devices, install drivers, change microphones or volume, or use the network. Settings and a log are stored in `donnees/` next to the executable.
 
-- **A manual choice of the controller in Windows during those first two seconds can be corrected too.** Windows does not report whether a default change was automatic or manual. Use **Utiliser** in Guardio, or pause protection, for this case.
-- This restores a default after a notification; it does not prevent the driver's switch. A brief audio interruption can occur on other systems. Apps that explicitly select the controller instead of following the Windows default are not rerouted.
-- Detection currently relies on the audio interface name containing `DualSense`. Other controllers, renamed interfaces, DualSense Edge and Bluetooth have not been validated.
-- A controller already connected when Guardio starts is not treated as a new connection.
-- **Haptics, adaptive triggers and game-specific controller speaker effects have not been tested in a compatible game.** The device stays enabled, but that is not proof that every game feature works.
-- The output setter uses the undocumented Windows `PolicyConfig` COM interface. Windows updates may affect compatibility.
+**Known limits:** a manual switch to the controller in Windows settings within those two seconds is also undone; use **Sortie** in Guardio instead. A brief sound cut can happen. Apps that target the controller directly are not rerouted. The output switch uses Windows' undocumented `PolicyConfig` interface.
 
-## Validation
+## Build
 
-| Check | Evidence |
-| --- | --- |
-| Policy tests | 25 automated scenarios covering reconnection, notification order, independent roles, manual choices, missing outputs, pause and loop prevention. |
-| Windows integration | 11 checks passed in v0.1.0 on real audio endpoints, including a real default-output change and restoration. Controller arrival was simulated in the policy for these checks. The audio policy is unchanged in v0.1.1. |
-| Physical USB reconnect | In v0.1.0, the tester unplugged and reconnected the DualSense while playing audio, and reported that sound stayed in the headset with no audible interruption. The log recorded a communications-role correction; multimedia already stayed on the headset. |
-| Controller availability | A controller remained readable through WinMM during the original tests and the v0.1.1 read-only inventory checks. This does not validate every button or advanced game feature. |
-
-See the [v0.1.1 validation notes](docs/validation-v0.1.1.md) and [original hardware checks](docs/validation-v0.1.0.md) for scope and limitations. Automated CI runs the build and policy tests; it does not claim to test physical hardware.
-
-## Updating from GardeAudio
-
-Quit the old application before starting `Guardio.exe`. To retain your settings when extracting into a new folder, copy your existing `donnees/` folder beside `Guardio.exe`. Its layout is unchanged. The two names share the same instance guard, so an older copy cannot run alongside Guardio.
-
-## Build from source
-
-Use Windows and the [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
+Requires Windows and the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```powershell
 dotnet build src/Guardio/Guardio.csproj -c Release
@@ -74,25 +48,14 @@ dotnet run --project tests/Guardio.Tests/Guardio.Tests.csproj -c Release
 ./scripts/Publish.ps1
 ```
 
-The packaging script creates both ZIPs and `SHA256SUMS.txt` in `artifacts/`. The standalone build bundles .NET 8.0.32, including its license and notices. The app uses WinForms and Windows Core Audio COM interop, with no third-party NuGet libraries. The test project is a small console runner; a failed scenario exits with a nonzero code.
+`Publish.ps1` writes both ZIPs and `SHA256SUMS.txt` to `artifacts/`.
 
-## Diagnostics and bug reports
+## Bug reports
 
-For a read-only inventory:
+`Guardio.exe --inventory inventory.json` writes your audio devices and defaults to a file (read-only). Remove device IDs before sharing it in an [issue](https://github.com/Nagaraaa/Guardio/issues).
 
-```powershell
-$process = Start-Process .\Guardio.exe -ArgumentList '--inventory inventory.json' -Wait -PassThru
-$process.ExitCode
-```
+`--live-test <folder>` is a developer check that **changes real audio defaults** (then restores them). It needs a headset selected in Windows and a connected controller.
 
-This writes device names, endpoint identifiers and default selections to `inventory.json`. Review and redact identifiers before sharing it. Report problems through [GitHub Issues](https://github.com/Nagaraaa/Guardio/issues), with your Windows version, controller model, connection type and what happened.
+## License
 
-The developer-only `--live-test folder` command **changes real output defaults** before attempting to restore the originals. Its current fixture requires a Logitech PRO X headset, a DualSense and another output. Close the GUI before running it; the read-only inventory is sufficient for ordinary bug reports.
-
-## License and references
-
-[MIT](LICENSE). Bundled .NET components retain their own licenses in the standalone archive.
-
-- [Windows audio endpoint notifications](https://learn.microsoft.com/en-us/windows/win32/api/mmdeviceapi/nn-mmdeviceapi-immnotificationclient)
-- [Default output changes](https://learn.microsoft.com/en-us/windows/win32/api/mmdeviceapi/nf-mmdeviceapi-immnotificationclient-ondefaultdevicechanged)
-- [Sony: using a DualSense on PC](https://www.playstation.com/en-us/support/hardware/pair-dualsense-controller-bluetooth/)
+[MIT](LICENSE)

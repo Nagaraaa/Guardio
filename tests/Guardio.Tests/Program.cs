@@ -3,7 +3,7 @@ using Guardio.Core;
 var time = DateTimeOffset.Parse("2026-10-20T12:00:00Z");
 var h = new OutputDevice("headset", "Casque", true, false);
 var s = new OutputDevice("speakers", "Enceintes", true, false);
-var p = new OutputDevice("ps5", "DualSense", true, true);
+var p = new OutputDevice("pad", "Manette", true, true);
 var roles = Enum.GetValues<AudioRole>();
 var results = new List<(string Name, bool Passed)>();
 GuardPolicy Make(bool controllerPresent = false)
@@ -40,8 +40,11 @@ Test("Un appareil inconnu n’est pas bloqué", () => { var g=Make(); return g.O
 Test("L’absence de sortie par défaut est acceptée", () => Make().ObserveDefault(AudioRole.Console,null,time) is null);
 Test("Le rôle communications garde son propre choix", () => { var g=Make(); g.ObserveDefault(AudioRole.Communications,s.Id,time); g.ObserveDevices([h,s,p],time); return g.ObserveDefault(AudioRole.Communications,p.Id,time)?.TargetId==s.Id && g.ObserveDefault(AudioRole.Console,p.Id,time)?.TargetId==h.Id; });
 Test("Une manette qui disparaît ne peut pas déclencher une restauration", () => { var g=Make(); g.ObserveDevices([h,s,p],time); g.ObserveDevices([h,s],time); return g.ObserveDefault(AudioRole.Console,p.Id,time) is null; });
-Test("Les identifiants restent opaques et sont comparés exactement", () => { var g=Make(); g.ObserveDevices([h,s,p],time); return g.ObserveDefault(AudioRole.Console,"PS5",time) is null; });
+Test("Les identifiants restent opaques et sont comparés exactement", () => { var g=Make(); g.ObserveDevices([h,s,p],time); return g.ObserveDefault(AudioRole.Console,"PAD",time) is null; });
 Test("Les rôles couplés par Windows sont consommés ensemble", () => { var g=Make(); g.ObserveDevices([h,s,p],time); var d=g.ObserveDefault(AudioRole.Console,p.Id,time)!; g.AcknowledgeRestore(d,true); g.AcknowledgeRestore(d with{Role=AudioRole.Multimedia},true); return g.ObserveDefault(AudioRole.Multimedia,p.Id,time) is null; });
 Test("Une notification d’un rôle inchangé ne corrige pas un choix existant", () => { var g=Make(); g.ObserveDefault(AudioRole.Communications,p.Id,time); g.ObserveDevices([h,s,p],time); return g.ObserveDefault(AudioRole.Communications,p.Id,time) is null; });
+Test("Les manettes Sony et Xbox sont reconnues", () => new[] { "DualSense Wireless Controller", "DualSense Edge Wireless Controller", "Wireless Controller", "Xbox Controller", "Xbox Wireless Controller" }.All(n => ControllerDetector.Matches(n)));
+Test("Un casque ou des enceintes ne sont pas pris pour une manette", () => !new[] { "PRO X Wireless Gaming Headset", "Realtek(R) Audio", "Xbox Wireless Headset", "NVIDIA High Definition Audio", "Speakers" }.Any(n => ControllerDetector.Matches(n)));
+Test("Une seule propriété suffit pour reconnaître une manette", () => ControllerDetector.Matches("Haut-parleurs", null, "DualSense Wireless Controller"));
 Console.WriteLine($"{results.Count(r=>r.Passed)}/{results.Count} scénarios réussis");
 return results.All(r=>r.Passed) ? 0 : 1;

@@ -10,41 +10,56 @@ public sealed class GuardService : IDisposable
     private readonly Control dispatcher;
     private readonly string dataDir;
     private readonly GuardPolicy policy = new();
+    private readonly Dictionary<string, bool> controllerOverrides = new(StringComparer.Ordinal);
     private bool disposed;
     private readonly System.Windows.Forms.Timer recoveryTimer = new() { Interval = 1000 };
-    public List<Endpoint> Outputs { get; private set; }
+    public List<Endpoint> Outputs { get; private set; } = new();
     public bool Enabled => policy.Enabled;
     public string? FallbackId { get => policy.FallbackId; set => policy.FallbackId = value; }
+    public IReadOnlyDictionary<string, bool> ControllerOverrides => controllerOverrides;
     public int Corrections { get; private set; }
     public List<string> Log { get; } = new();
     public event Action? Changed;
     public static JsonSerializerOptions JsonOptions { get; } = new()
     { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
 
-    public GuardService(Control dispatcher, NativeAudio audio, string dataDir)
+    public GuardService(Control dispatcher, NativeAudio audio, string dataDir,
+        IReadOnlyDictionary<string, bool>? controllerOverrides = null)
     {
         this.dispatcher = dispatcher; this.audio = audio; this.dataDir = dataDir;
         Directory.CreateDirectory(dataDir);
-        Outputs = audio.Endpoints(all: true);
-        policy.Initialize(Outputs.Select(e => e.ToOutput()), audio.Defaults());
+        foreach (var pair in controllerOverrides ?? new Dictionary<string, bool>())
+            this.controllerOverrides[pair.Key] = pair.Value;
+        ResetBaseline();
         audio.DevicesChanged += OnDevices;
         audio.DefaultChanged += OnDefault;
         audio.StartNotifications();
         // Also recover after a missed notification / sleep, without enforcing a fixed default.
         recoveryTimer.Tick += (_, _) => Safely(() => RefreshDevices());
         recoveryTimer.Start();
-        AddLog("Prêt. Les sorties déjà connectées ne sont pas verrouillées.");
+        AddLog("Prêt.");
     }
 
     public void Enable(bool enabled)
     {
         policy.SetEnabled(enabled);
-        // Reset the baseline: resuming must not be mistaken for a new connection.
-        Outputs = audio.Endpoints(all: true);
-        policy.Initialize(Outputs.Select(e => e.ToOutput()), audio.Defaults());
-        AddLog(enabled ? "Protection active au prochain branchement." : "Protection en pause.");
+        // Resuming must not be mistaken for a new connection.
+        ResetBaseline();
+        AddLog(enabled ? "Protection activée." : "Protection en pause.");
         Changed?.Invoke();
         WriteStatus();
+    }
+
+    /// <summary>Marks an output as a controller (or not), overriding name detection.</summary>
+    public void SetController(string id, bool isController)
+    {
+        var detected = audio.Endpoints(all: true).FirstOrDefault(e => e.Id == id)?.IsController;
+        if (detected == isController) controllerOverrides.Remove(id);
+        else controllerOverrides[id] = isController;
+        // A newly marked controller that is already connected is not a new connection.
+        ResetBaseline();
+        AddLog($"{Name(id)} : {(isController ? "traitée comme manette" : "n’est plus traitée comme manette")}.");
+        Changed?.Invoke(); WriteStatus();
     }
 
     public void SelectManually(string id)
@@ -53,8 +68,16 @@ public sealed class GuardService : IDisposable
         audio.SetDefault(id, AudioRole.Console);
         audio.SetDefault(id, AudioRole.Multimedia);
         foreach (var pair in audio.Defaults()) policy.ObserveDefault(pair.Key, pair.Value, DateTimeOffset.UtcNow);
-        AddLog($"Choix manuel : {Name(id)}.");
+        AddLog($"Sortie choisie : {Name(id)}.");
         Changed?.Invoke(); WriteStatus();
+    }
+
+    private List<Endpoint> ReadOutputs() => audio.Endpoints(all: true)
+        .Select(e => controllerOverrides.TryGetValue(e.Id, out var c) ? e with { IsController = c } : e).ToList();
+    private void ResetBaseline()
+    {
+        Outputs = ReadOutputs();
+        policy.Initialize(Outputs.Select(e => e.ToOutput()), audio.Defaults());
     }
 
     private void OnDevices(string _) => Post(RefreshDevices);
@@ -77,9 +100,9 @@ public sealed class GuardService : IDisposable
 
     public void RefreshDevices()
     {
-        Outputs = audio.Endpoints(all: true);
+        Outputs = ReadOutputs();
         foreach (var id in policy.ObserveDevices(Outputs.Select(e => e.ToOutput()), DateTimeOffset.UtcNow))
-            AddLog($"Branchement détecté : {Name(id)}. Protection ponctuelle pendant 2 s.");
+            AddLog($"Manette branchée : {Name(id)}.");
         Changed?.Invoke(); WriteStatus();
     }
 
@@ -105,7 +128,7 @@ public sealed class GuardService : IDisposable
             if (success)
             {
                 Corrections++;
-                AddLog($"Bascule au branchement corrigée ({role}) → {Name(decision.TargetId)}.");
+                AddLog($"Sortie rétablie : {Name(decision.TargetId)} ({role}).");
             }
             else AddLog("Windows n’a pas confirmé le rétablissement de la sortie.");
         }
@@ -117,13 +140,14 @@ public sealed class GuardService : IDisposable
         Changed?.Invoke(); WriteStatus();
     }
 
-    public string CurrentName => Name(audio.Default(AudioRole.Multimedia));
+    public string? CurrentId => audio.Default(AudioRole.Multimedia);
+    public string CurrentName => Name(CurrentId);
     internal void SimulateArrivalForDiagnostics()
     {
         // Only the policy's availability snapshot changes. No device is disabled,
         // unplugged or restarted: this is not proof of a physical USB reconnection.
         var now = DateTimeOffset.UtcNow;
-        policy.ObserveDevices(Outputs.Select(e => e.ToOutput() with { Active = e.IsDualSense ? false : e.Active }), now);
+        policy.ObserveDevices(Outputs.Select(e => e.ToOutput() with { Active = !e.IsController && e.Active }), now);
         policy.ObserveDevices(Outputs.Select(e => e.ToOutput()), now);
         AddLog("TEST : arrivée simulée dans la logique, périphériques laissés actifs.");
     }
@@ -139,7 +163,7 @@ public sealed class GuardService : IDisposable
     {
         try
         {
-            var status = new { version = "0.1.1", at = DateTimeOffset.Now, enabled = Enabled,
+            var status = new { version = Program.Version, at = DateTimeOffset.Now, enabled = Enabled,
                 fallbackId = FallbackId, corrections = Corrections,
                 outputs = Outputs, defaults = audio.Defaults(), inputs = audio.Defaults(input: true),
                 recentEvents = Log.TakeLast(15).ToArray() };

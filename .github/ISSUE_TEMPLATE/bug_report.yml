@@ -5,26 +5,26 @@ body:
     id: version
     attributes:
       label: Guardio version and package
-      placeholder: v0.1.1, standalone ZIP
+      placeholder: v0.2.0, standalone ZIP
     validations:
       required: true
   - type: input
     id: hardware
     attributes:
       label: Windows version, controller and connection
-      placeholder: Windows 11, PS5 DualSense, USB
+      placeholder: Windows 11, DualSense, USB
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
       label: Steps, expected behavior and actual behavior
-      description: Include the headset/output model and whether you selected the controller manually within two seconds of connecting it.
+      description: Include your headset or speakers model.
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
       label: Relevant log excerpt (optional)
-      description: Review device names and redact endpoint identifiers or other personal details before posting. A raw inventory is not required.
+      description: Remove device IDs before posting.
       render: text

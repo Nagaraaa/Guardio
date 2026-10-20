@@ -1,9 +1,9 @@
-using System.Text.Json;
-
 namespace Guardio;
 
 internal static class Program
 {
+    public static string Version { get; } = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "";
+
     [STAThread]
     private static int Main(string[] args)
     {
@@ -11,10 +11,9 @@ internal static class Program
         try
         {
             if (args.Length > 0) return Diagnostics.Run(args);
-            // Retain the original instance key so an older GardeAudio cannot run
-            // alongside Guardio and compete for the same Windows audio defaults.
+            // Same key as GardeAudio, so an older copy can't fight Guardio over the audio defaults.
             using var mutex = new Mutex(true, "Local\\GardeAudio.DualSense.v01", out bool first);
-            if (!first) { MessageBox.Show("La protection audio est déjà ouverte près de l’horloge.", "Guardio"); return 0; }
+            if (!first) { MessageBox.Show("Guardio est déjà ouvert dans la zone de notification.", "Guardio"); return 0; }
             Application.Run(new MainForm(Path.Combine(AppContext.BaseDirectory, "donnees")));
             return 0;
         }

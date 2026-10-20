@@ -2,11 +2,11 @@ namespace Guardio.Core;
 
 public enum AudioRole { Console, Multimedia, Communications }
 
-public record OutputDevice(string Id, string Name, bool Active, bool IsDualSense);
+public record OutputDevice(string Id, string Name, bool Active, bool IsController);
 public record RestoreDecision(AudioRole Role, string TargetId, string RejectedId);
 
 /// <summary>
-/// A short, single-use protection for each output role after a DualSense
+/// A short, single-use protection for each output role after a game controller
 /// becomes active. Never pins an output indefinitely or modifies input devices.
 /// All calls are serialized by the application on its UI thread.
 /// </summary>
@@ -50,7 +50,7 @@ public sealed class GuardPolicy
         var armed = new List<string>();
         if (initialized && Enabled)
         {
-            foreach (var d in next.Values.Where(d => d.Active && d.IsDualSense))
+            foreach (var d in next.Values.Where(d => d.Active && d.IsController))
             {
                 if (!devices.TryGetValue(d.Id, out var old) || !old.Active)
                 {
@@ -83,7 +83,7 @@ public sealed class GuardPolicy
         // An existing controller selection is not a new automatic switch.
         if (id == priorId) return null;
         if (!Enabled || id is null || !devices.TryGetValue(id, out var output)
-            || !output.Active || !output.IsDualSense || !arrivals.TryGetValue(id, out var arrival)
+            || !output.Active || !output.IsController || !arrivals.TryGetValue(id, out var arrival)
             || now > arrival.Until || arrival.Consumed.Contains(role)) return null;
 
         arrival.Before.TryGetValue(role, out var before);
@@ -111,5 +111,5 @@ public sealed class GuardPolicy
     }
 
     private bool IsAllowedActive(string? id) => id is not null
-        && devices.TryGetValue(id, out var d) && d.Active && !d.IsDualSense;
+        && devices.TryGetValue(id, out var d) && d.Active && !d.IsController;
 }

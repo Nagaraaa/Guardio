@@ -1,28 +1,12 @@
-Guardio 0.1.1 - Windows x64 / PS5 DualSense USB
+Guardio - Windows x64
 
-Extract the whole ZIP into a writable folder and run Guardio.exe.
-The standalone package includes .NET. The smaller framework-dependent
-package requires the .NET 8 Desktop Runtime (x64).
+Run Guardio.exe. It keeps your headset selected when you plug in a
+game controller over USB (DualSense, DualShock 4, Xbox...).
 
-The interface is currently in French:
-- Keep "Proteger les branchements de la DualSense" checked.
-- Choose your headset in Windows, then connect the controller over USB.
-- "Sortie de secours": fallback if the previous output is unavailable.
-- "Utiliser": explicitly choose the selected output, including the controller.
-- "Reduire pres de l'horloge": keep running in the system tray.
-- "Quitter" and the window close button both stop the program.
+The standalone package includes .NET. The framework-dependent package
+requires the .NET 8 Desktop Runtime (x64).
 
-During the first two seconds after connecting the controller, a manual
-controller choice in Windows can also be corrected. Use "Utiliser" in
-Guardio or pause the protection in that case. A brief sound interruption
-is possible on other PCs. Haptics and adaptive triggers have not been
-validated in a compatible game. No audio device is disabled by the app.
+To uninstall, quit Guardio and delete this folder.
 
-Settings and diagnostic logs stay in donnees/ next to the executable.
-No automatic Windows startup entry is installed. Quit and delete the folder
-to uninstall. These executables are unsigned.
-
-French guide / Guide francais:
-https://github.com/Nagaraaa/Guardio/blob/main/docs/README.fr.md
-Source, limitations and bug reports:
-https://github.com/Nagaraaa/Guardio
+Guide en francais : https://github.com/Nagaraaa/Guardio/blob/main/docs/README.fr.md
+Source and bug reports: https://github.com/Nagaraaa/Guardio

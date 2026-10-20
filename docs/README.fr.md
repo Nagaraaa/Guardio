@@ -6,7 +6,7 @@ Quand on branche une manette en USB (DualSense, DualShock 4, Xbox…), Windows b
 
 ## Installation
 
-1. Télécharger **[Guardio v0.2.0](https://github.com/Nagaraaa/Guardio/releases/download/v0.2.0/Guardio-v0.2.0-windows-x64.zip)**. Ce ZIP contient .NET : rien d'autre à installer.
+1. Télécharger **[Guardio v0.3.0](https://github.com/Nagaraaa/Guardio/releases/download/v0.3.0/Guardio-v0.3.0-windows-x64.zip)**. Ce ZIP contient .NET : rien d'autre à installer.
 2. L'extraire où on veut et lancer `Guardio.exe`, sans droits administrateur.
 
 Pour désinstaller, désactiver **Lancer avec Windows**, quitter Guardio et supprimer son dossier.

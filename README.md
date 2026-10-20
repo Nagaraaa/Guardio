@@ -18,11 +18,11 @@ Portable Windows x64 app. The interface is in French. [Guide en français](docs/
 
 ## Download
 
-**[Guardio v0.2.0 — standalone ZIP](https://github.com/Nagaraaa/Guardio/releases/download/v0.2.0/Guardio-v0.2.0-windows-x64.zip)** (recommended, includes .NET)
+**[Guardio v0.3.0 — standalone ZIP](https://github.com/Nagaraaa/Guardio/releases/download/v0.3.0/Guardio-v0.3.0-windows-x64.zip)** (recommended, includes .NET)
 
-Also available: a [smaller ZIP](https://github.com/Nagaraaa/Guardio/releases/download/v0.2.0/Guardio-v0.2.0-windows-x64-framework-dependent.zip) that needs the [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0), checksums and older versions on the [releases page](https://github.com/Nagaraaa/Guardio/releases).
+Also available: a [smaller ZIP](https://github.com/Nagaraaa/Guardio/releases/download/v0.3.0/Guardio-v0.3.0-windows-x64-framework-dependent.zip) that needs the [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0), checksums and older versions on the [releases page](https://github.com/Nagaraaa/Guardio/releases).
 
-New in 0.2.0: redesigned interface with light and dark themes, support for DualShock 4 and Xbox controllers, and manual controller selection.
+New in 0.3.0: a "Lancer avec Windows" option, and closing the window now keeps Guardio running in the notification area. Version 0.2.0 brought the new interface and support for DualShock 4 and Xbox controllers.
 
 Extract it anywhere and run `Guardio.exe`. No installer and no admin rights. To uninstall, turn off **Lancer avec Windows**, quit, and delete the folder.
 

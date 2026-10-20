@@ -18,6 +18,8 @@ Get the latest ZIP from the [releases page](https://github.com/Nagaraaa/Guardio/
 
 Extract it anywhere and run `Guardio.exe`. No installer and no admin rights. To uninstall, delete the folder.
 
+Coming from GardeAudio? Quit it, then copy its `donnees/` folder next to `Guardio.exe` to keep your settings.
+
 ## Usage
 
 - The switch at the top turns protection on or off.

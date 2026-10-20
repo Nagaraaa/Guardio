@@ -9,6 +9,8 @@ Quand on branche une manette en USB (DualSense, DualShock 4, Xbox…), Windows b
 
 Pour désinstaller, quitter Guardio et supprimer son dossier.
 
+Tu viens de GardeAudio ? Quitte-le, puis copie son dossier `donnees/` à côté de `Guardio.exe` pour garder tes réglages.
+
 ## Utilisation
 
 - **L'interrupteur en haut** active ou met en pause la protection.

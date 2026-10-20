@@ -11,7 +11,8 @@ internal static class Program
         try
         {
             if (args.Length > 0) return Diagnostics.Run(args);
-            using var mutex = new Mutex(true, "Local\\Guardio", out bool first);
+            // Same key as GardeAudio, so an older copy can't fight Guardio over the audio defaults.
+            using var mutex = new Mutex(true, "Local\\GardeAudio.DualSense.v01", out bool first);
             if (!first) { MessageBox.Show("Guardio est déjà ouvert dans la zone de notification.", "Guardio"); return 0; }
             Application.Run(new MainForm(Path.Combine(AppContext.BaseDirectory, "donnees")));
             return 0;

@@ -2,9 +2,11 @@
 
 Quand on branche une manette en USB (DualSense, DualShock 4, Xbox…), Windows bascule souvent le son dessus. Guardio remet aussitôt la sortie audio précédente. La manette reste utilisable normalement.
 
+<p align="center"><img src="images/guardio-light.png" alt="Fenêtre de Guardio" width="400"></p>
+
 ## Installation
 
-1. Télécharger le ZIP sur la [page des versions](https://github.com/Nagaraaa/Guardio/releases/latest). La version **standalone** contient .NET : rien d'autre à installer.
+1. Télécharger **[Guardio v0.2.0](https://github.com/Nagaraaa/Guardio/releases/download/v0.2.0/Guardio-v0.2.0-windows-x64.zip)**. Ce ZIP contient .NET : rien d'autre à installer.
 2. L'extraire où on veut et lancer `Guardio.exe`, sans droits administrateur.
 
 Pour désinstaller, quitter Guardio et supprimer son dossier.

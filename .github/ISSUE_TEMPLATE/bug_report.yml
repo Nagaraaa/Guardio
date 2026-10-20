@@ -4,8 +4,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: GardeAudio version and package
-      placeholder: v0.1.0, standalone ZIP
+      label: Guardio version and package
+      placeholder: v0.1.1, standalone ZIP
     validations:
       required: true
   - type: input

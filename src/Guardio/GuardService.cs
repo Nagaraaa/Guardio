@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using GardeAudio.Core;
+using Guardio.Core;
 
-namespace GardeAudio;
+namespace Guardio;
 
 public sealed class GuardService : IDisposable
 {
@@ -139,7 +139,7 @@ public sealed class GuardService : IDisposable
     {
         try
         {
-            var status = new { version = "0.1.0", at = DateTimeOffset.Now, enabled = Enabled,
+            var status = new { version = "0.1.1", at = DateTimeOffset.Now, enabled = Enabled,
                 fallbackId = FallbackId, corrections = Corrections,
                 outputs = Outputs, defaults = audio.Defaults(), inputs = audio.Defaults(input: true),
                 recentEvents = Log.TakeLast(15).ToArray() };

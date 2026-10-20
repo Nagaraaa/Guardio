@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
-using GardeAudio.Core;
+using Guardio.Core;
 
-namespace GardeAudio;
+namespace Guardio;
 
 public record Endpoint(string Id, string Name, string Description, string InterfaceName,
     uint State, bool Input)

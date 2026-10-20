@@ -5,8 +5,8 @@ Small, reproducible fixes and hardware compatibility reports are welcome. For la
 Use Windows with the .NET 8 SDK. Before submitting a code change, run:
 
 ```powershell
-dotnet build src/GardeAudio/GardeAudio.csproj -c Release
-dotnet run --project tests/GardeAudio.Tests/GardeAudio.Tests.csproj -c Release
+dotnet build src/Guardio/Guardio.csproj -c Release
+dotnet run --project tests/Guardio.Tests/Guardio.Tests.csproj -c Release
 ```
 
 Changes to the policy should preserve manual choices, the short arrival window and the rule that unavailable outputs are never selected. Add a focused regression scenario for a behavior change. Do not turn the guard into a permanent default-output lock.

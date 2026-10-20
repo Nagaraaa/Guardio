@@ -1,4 +1,4 @@
-namespace GardeAudio.Core;
+namespace Guardio.Core;
 
 public enum AudioRole { Console, Multimedia, Communications }
 

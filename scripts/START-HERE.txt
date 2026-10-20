@@ -1,6 +1,6 @@
-GardeAudio 0.1.0 - Windows x64 / PS5 DualSense USB
+Guardio 0.1.1 - Windows x64 / PS5 DualSense USB
 
-Extract the whole ZIP into a writable folder and run GardeAudio.exe.
+Extract the whole ZIP into a writable folder and run Guardio.exe.
 The standalone package includes .NET. The smaller framework-dependent
 package requires the .NET 8 Desktop Runtime (x64).
 
@@ -14,7 +14,7 @@ The interface is currently in French:
 
 During the first two seconds after connecting the controller, a manual
 controller choice in Windows can also be corrected. Use "Utiliser" in
-GardeAudio or pause the protection in that case. A brief sound interruption
+Guardio or pause the protection in that case. A brief sound interruption
 is possible on other PCs. Haptics and adaptive triggers have not been
 validated in a compatible game. No audio device is disabled by the app.
 
@@ -23,6 +23,6 @@ No automatic Windows startup entry is installed. Quit and delete the folder
 to uninstall. These executables are unsigned.
 
 French guide / Guide francais:
-https://github.com/Nagaraaa/GardeAudio/blob/main/docs/README.fr.md
+https://github.com/Nagaraaa/Guardio/blob/main/docs/README.fr.md
 Source, limitations and bug reports:
-https://github.com/Nagaraaa/GardeAudio
+https://github.com/Nagaraaa/Guardio

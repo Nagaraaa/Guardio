@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using GardeAudio.Core;
+using Guardio.Core;
 
-namespace GardeAudio;
+namespace Guardio;
 
 internal static class Diagnostics
 {

@@ -1,30 +1,30 @@
-# GardeAudio
+# Guardio
 
 **Keep your headset selected when you plug in a PS5 DualSense controller.**
 
-[![Build](https://github.com/Nagaraaa/GardeAudio/actions/workflows/build.yml/badge.svg)](https://github.com/Nagaraaa/GardeAudio/actions/workflows/build.yml)
+[![Build](https://github.com/Nagaraaa/Guardio/actions/workflows/build.yml/badge.svg)](https://github.com/Nagaraaa/Guardio/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform: Windows x64](https://img.shields.io/badge/platform-Windows%20x64-0078D4.svg)](#download)
 
-Windows can switch its default sound output to a controller when it is connected over USB. GardeAudio watches for a DualSense connection and restores the output you were using if that switch happens. It leaves the controller's audio device enabled.
+Windows can switch its default sound output to a controller when it is connected over USB. Guardio watches for a DualSense connection and restores the output you were using if that switch happens. It leaves the controller's audio device enabled.
 
-This is a small, portable Windows utility. **v0.1.0 is an early preview, tested with one PS5 DualSense over USB on Windows 11.** The application interface is currently in French. [Guide en français](docs/README.fr.md).
+This is a small, portable Windows utility. **v0.1.1 is an early preview for PS5 DualSense over USB.** It renames GardeAudio to Guardio and keeps the same audio policy validated on Windows 11 in v0.1.0. The application interface is currently in French. [Guide en français](docs/README.fr.md).
 
 ## Download
 
 | Package | Choose this if… |
 | --- | --- |
-| **[Windows x64 — standalone ZIP](https://github.com/Nagaraaa/GardeAudio/releases/download/v0.1.0/GardeAudio-v0.1.0-windows-x64.zip)** | You want to extract and run it. Includes the .NET runtime; no separate .NET installation needed. |
-| [Windows x64 — small ZIP](https://github.com/Nagaraaa/GardeAudio/releases/download/v0.1.0/GardeAudio-v0.1.0-windows-x64-framework-dependent.zip) | You already have the [.NET 8 Desktop Runtime, x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0). |
+| **[Windows x64 — standalone ZIP](https://github.com/Nagaraaa/Guardio/releases/download/v0.1.1/Guardio-v0.1.1-windows-x64.zip)** | You want to extract and run it. Includes the .NET runtime; no separate .NET installation needed. |
+| [Windows x64 — small ZIP](https://github.com/Nagaraaa/Guardio/releases/download/v0.1.1/Guardio-v0.1.1-windows-x64-framework-dependent.zip) | You already have the [.NET 8 Desktop Runtime, x64](https://dotnet.microsoft.com/en-us/download/dotnet/8.0). |
 
-[Release notes and SHA-256 checksums](https://github.com/Nagaraaa/GardeAudio/releases/tag/v0.1.0). These builds are unsigned.
+[Release notes and SHA-256 checksums](https://github.com/Nagaraaa/Guardio/releases/tag/v0.1.1). These builds are unsigned.
 
 ## Get started
 
-1. Extract the whole ZIP into a writable folder, then run `GardeAudio.exe`. Administrator rights are not required.
+1. Extract the whole ZIP into a writable folder, then run `Guardio.exe`. Administrator rights are not required.
 2. Select your headset in Windows before connecting the controller. Leave **Protéger les branchements de la DualSense** checked.
 3. Pick a fallback output under **Sortie de secours**. It is only used if the previous output is unavailable.
-4. Connect your DualSense over USB. GardeAudio watches for an unwanted switch during the next two seconds.
+4. Connect your DualSense over USB. Guardio watches for an unwanted switch during the next two seconds.
 5. Use **Réduire près de l’horloge** to keep it running in the tray. **Quitter** and the window's close button both exit the program.
 
 To switch outputs deliberately, select one under **Changer volontairement de sortie** and click **Utiliser**. This always takes precedence over a pending correction. You can also pause protection using the checkbox or tray menu.
@@ -42,31 +42,35 @@ It does not disable devices, install drivers, send controller input reports, cha
 
 ## Limits to know
 
-- **A manual choice of the controller in Windows during those first two seconds can be corrected too.** Windows does not report whether a default change was automatic or manual. Use **Utiliser** in GardeAudio, or pause protection, for this case.
+- **A manual choice of the controller in Windows during those first two seconds can be corrected too.** Windows does not report whether a default change was automatic or manual. Use **Utiliser** in Guardio, or pause protection, for this case.
 - This restores a default after a notification; it does not prevent the driver's switch. A brief audio interruption can occur on other systems. Apps that explicitly select the controller instead of following the Windows default are not rerouted.
 - Detection currently relies on the audio interface name containing `DualSense`. Other controllers, renamed interfaces, DualSense Edge and Bluetooth have not been validated.
-- A controller already connected when GardeAudio starts is not treated as a new connection.
+- A controller already connected when Guardio starts is not treated as a new connection.
 - **Haptics, adaptive triggers and game-specific controller speaker effects have not been tested in a compatible game.** The device stays enabled, but that is not proof that every game feature works.
 - The output setter uses the undocumented Windows `PolicyConfig` COM interface. Windows updates may affect compatibility.
 
 ## Validation
 
-| Check | Evidence for v0.1.0 |
+| Check | Evidence |
 | --- | --- |
 | Policy tests | 25 automated scenarios covering reconnection, notification order, independent roles, manual choices, missing outputs, pause and loop prevention. |
-| Windows integration | 11 checks on real audio endpoints, including a real default-output change and restoration. Controller arrival was simulated in the policy for these checks. |
-| Physical USB reconnect | The tester unplugged and reconnected the DualSense while playing audio, and reported that sound stayed in the headset with no audible interruption. The log recorded a communications-role correction; multimedia already stayed on the headset. |
-| Controller availability | A controller remained readable through WinMM after the tests. This does not validate every button or advanced game feature. |
+| Windows integration | 11 checks passed in v0.1.0 on real audio endpoints, including a real default-output change and restoration. Controller arrival was simulated in the policy for these checks. The audio policy is unchanged in v0.1.1. |
+| Physical USB reconnect | In v0.1.0, the tester unplugged and reconnected the DualSense while playing audio, and reported that sound stayed in the headset with no audible interruption. The log recorded a communications-role correction; multimedia already stayed on the headset. |
+| Controller availability | A controller remained readable through WinMM during the original tests and the v0.1.1 read-only inventory checks. This does not validate every button or advanced game feature. |
 
-See the [validation notes](docs/validation-v0.1.0.md) for scope and limitations. Automated CI runs the build and policy tests; it does not claim to test physical hardware.
+See the [v0.1.1 validation notes](docs/validation-v0.1.1.md) and [original hardware checks](docs/validation-v0.1.0.md) for scope and limitations. Automated CI runs the build and policy tests; it does not claim to test physical hardware.
+
+## Updating from GardeAudio
+
+Quit the old application before starting `Guardio.exe`. To retain your settings when extracting into a new folder, copy your existing `donnees/` folder beside `Guardio.exe`. Its layout is unchanged. The two names share the same instance guard, so an older copy cannot run alongside Guardio.
 
 ## Build from source
 
 Use Windows and the [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
 ```powershell
-dotnet build src/GardeAudio/GardeAudio.csproj -c Release
-dotnet run --project tests/GardeAudio.Tests/GardeAudio.Tests.csproj -c Release
+dotnet build src/Guardio/Guardio.csproj -c Release
+dotnet run --project tests/Guardio.Tests/Guardio.Tests.csproj -c Release
 ./scripts/Publish.ps1
 ```
 
@@ -77,11 +81,11 @@ The packaging script creates both ZIPs and `SHA256SUMS.txt` in `artifacts/`. The
 For a read-only inventory:
 
 ```powershell
-$process = Start-Process .\GardeAudio.exe -ArgumentList '--inventory inventory.json' -Wait -PassThru
+$process = Start-Process .\Guardio.exe -ArgumentList '--inventory inventory.json' -Wait -PassThru
 $process.ExitCode
 ```
 
-This writes device names, endpoint identifiers and default selections to `inventory.json`. Review and redact identifiers before sharing it. Report problems through [GitHub Issues](https://github.com/Nagaraaa/GardeAudio/issues), with your Windows version, controller model, connection type and what happened.
+This writes device names, endpoint identifiers and default selections to `inventory.json`. Review and redact identifiers before sharing it. Report problems through [GitHub Issues](https://github.com/Nagaraaa/Guardio/issues), with your Windows version, controller model, connection type and what happened.
 
 The developer-only `--live-test folder` command **changes real output defaults** before attempting to restore the originals. Its current fixture requires a Logitech PRO X headset, a DualSense and another output. Close the GUI before running it; the read-only inventory is sufficient for ordinary bug reports.
 

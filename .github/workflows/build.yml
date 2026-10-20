@@ -18,16 +18,16 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: Build desktop application
-        run: dotnet build src/GardeAudio/GardeAudio.csproj -c Release --nologo
+        run: dotnet build src/Guardio/Guardio.csproj -c Release --nologo
       - name: Run policy scenarios
-        run: dotnet run --project tests/GardeAudio.Tests/GardeAudio.Tests.csproj -c Release
+        run: dotnet run --project tests/Guardio.Tests/Guardio.Tests.csproj -c Release
       - name: Package both Windows x64 builds
         shell: pwsh
         run: ./scripts/Publish.ps1
       - name: Upload packages
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: GardeAudio-windows-x64
+          name: Guardio-windows-x64
           path: |
             artifacts/*.zip
             artifacts/SHA256SUMS.txt

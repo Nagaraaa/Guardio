@@ -1,4 +1,4 @@
-using GardeAudio.Core;
+using Guardio.Core;
 
 var time = DateTimeOffset.Parse("2026-10-20T12:00:00Z");
 var h = new OutputDevice("headset", "Casque", true, false);

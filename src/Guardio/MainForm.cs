@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace GardeAudio;
+namespace Guardio;
 
 public sealed class MainForm : Form
 {
@@ -11,7 +11,7 @@ public sealed class MainForm : Form
     private readonly ComboBox manualOutput = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 415 };
     private readonly ListBox journal = new() { Dock = DockStyle.Fill, HorizontalScrollbar = true, IntegralHeight = false };
     private readonly CheckBox enabled = new() { Text = "Protéger les branchements de la DualSense", AutoSize = true, Checked = true };
-    private readonly NotifyIcon tray = new() { Icon = SystemIcons.Shield, Text = "GardeAudio — DualSense", Visible = true };
+    private readonly NotifyIcon tray = new() { Icon = SystemIcons.Shield, Text = "Guardio — DualSense", Visible = true };
     private readonly string dataDir;
     private GuardService? guard;
     private bool refreshing;
@@ -21,7 +21,7 @@ public sealed class MainForm : Form
     public MainForm(string dataDir)
     {
         this.dataDir = dataDir;
-        Text = "GardeAudio · DualSense · 0.1.0";
+        Text = "Guardio · DualSense · 0.1.1";
         Font = new("Segoe UI", 10); BackColor = Color.FromArgb(248, 249, 251);
         ClientSize = new(620, 545); MinimumSize = new(600, 560);
         StartPosition = FormStartPosition.CenterScreen;
@@ -52,7 +52,7 @@ public sealed class MainForm : Form
         quit.Click += (_, _) => Close(); hide.Click += (_, _) => Hide();
         tray.DoubleClick += (_, _) => OpenWindow();
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Ouvrir GardeAudio", null, (_, _) => OpenWindow());
+        menu.Items.Add("Ouvrir Guardio", null, (_, _) => OpenWindow());
         menu.Items.Add(trayEnable);
         trayEnable.CheckedChanged += (_, _) => { if (!refreshing) enabled.Checked = trayEnable.Checked; };
         menu.Items.Add("Quitter", null, (_, _) => Close()); tray.ContextMenuStrip = menu;
@@ -128,7 +128,7 @@ public sealed class MainForm : Form
     private void Run(Action action)
     {
         try { action(); }
-        catch (Exception ex) { MessageBox.Show(this, ex.Message, "GardeAudio", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        catch (Exception ex) { MessageBox.Show(this, ex.Message, "Guardio", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
     }
     private void OpenWindow() { Show(); WindowState = FormWindowState.Normal; Activate(); }
 }

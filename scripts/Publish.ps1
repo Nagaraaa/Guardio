@@ -7,7 +7,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$project = Join-Path $repoRoot 'src/GardeAudio/GardeAudio.csproj'
+$project = Join-Path $repoRoot 'src/Guardio/Guardio.csproj'
 [xml]$projectXml = Get-Content -LiteralPath $project -Raw
 $version = [string]$projectXml.Project.PropertyGroup.Version
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected a three-part project version.' }
@@ -42,7 +42,7 @@ foreach ($kind in @('standalone', 'framework-dependent')) {
     }
     & dotnet @publishArguments
     if ($LASTEXITCODE -ne 0) { throw "Publish failed: $kind" }
-    Copy-Item -LiteralPath (Join-Path $publishDirectory 'GardeAudio.exe') -Destination $packageDirectory
+    Copy-Item -LiteralPath (Join-Path $publishDirectory 'Guardio.exe') -Destination $packageDirectory
     Copy-Item -LiteralPath (Join-Path $repoRoot 'LICENSE') -Destination (Join-Path $packageDirectory 'LICENSE.txt')
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'START-HERE.txt') -Destination $packageDirectory
 
@@ -57,7 +57,7 @@ foreach ($kind in @('standalone', 'framework-dependent')) {
     }
 
     $suffix = if ($standalone) { '' } else { '-framework-dependent' }
-    $archive = Join-Path $OutputDirectory "GardeAudio-v$version-windows-x64$suffix.zip"
+    $archive = Join-Path $OutputDirectory "Guardio-v$version-windows-x64$suffix.zip"
     Compress-Archive -Path (Join-Path $packageDirectory '*') -DestinationPath $archive -CompressionLevel Optimal -Force
     $archives += $archive
 }

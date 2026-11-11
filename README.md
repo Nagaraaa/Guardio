@@ -49,7 +49,7 @@ Guardio does not disable devices, install drivers, change microphones or volume,
 
 ## Build
 
-Requires Windows and the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+Requires Windows and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ```powershell
 dotnet build src/Guardio/Guardio.csproj -c Release

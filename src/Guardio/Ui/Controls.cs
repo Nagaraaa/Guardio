@@ -41,6 +41,7 @@ internal sealed class Glyph : Label
 internal sealed class FlatButton : Button
 {
     private bool hover, pressed;
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public bool Primary { get; init; }
 
     public FlatButton()

@@ -2,7 +2,7 @@
 
 Fixes and controller compatibility reports are welcome. For larger features, open an issue first.
 
-Before submitting a change, on Windows with the .NET 8 SDK:
+Before submitting a change, on Windows with the .NET 10 SDK:
 
 ```powershell
 dotnet build src/Guardio/Guardio.csproj -c Release

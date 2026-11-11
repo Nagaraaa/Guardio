@@ -4,7 +4,7 @@ Run Guardio.exe. It keeps your headset selected when you plug in a
 game controller over USB (DualSense, DualShock 4, Xbox...).
 
 The standalone package includes .NET. The framework-dependent package
-requires the .NET 8 Desktop Runtime (x64).
+requires the .NET 10 Desktop Runtime (x64).
 
 To uninstall, turn off "Lancer avec Windows", quit Guardio
 and delete this folder.

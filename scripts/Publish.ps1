@@ -2,7 +2,7 @@
 param(
     [string]$OutputDirectory = '',
     [ValidatePattern('^8\.0\.\d+$')]
-    [string]$RuntimeVersion = '8.0.32'
+    [string]$RuntimeVersion = '10.0.15'
 )
 
 $ErrorActionPreference = 'Stop'
